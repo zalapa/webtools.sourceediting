@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -129,8 +129,10 @@ class HTML5ElementCollection extends ElementCollection implements org.eclipse.ws
 	 */
 	protected CMNode create(String elementName) {
 		CMNode edec = null;
-
-		if (elementName.equalsIgnoreCase(ACRONYM)) {
+		if (elementName.equalsIgnoreCase(A)) {
+			edec = new HedA5(this);
+		}
+		else if (elementName.equalsIgnoreCase(ACRONYM)) {
 			edec = new HedPhrase(ACRONYM, this);
 			((HTMLElemDeclImpl) edec).obsolete(true);
 		}
