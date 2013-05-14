@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2012 IBM Corporation and others.
+ * Copyright (c) 2008, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,8 @@ import org.eclipse.jst.jsp.core.internal.provisional.JSP11Namespace;
 import org.eclipse.jst.jsp.ui.internal.JSPUIPlugin;
 import org.eclipse.jst.jsp.ui.internal.Logger;
 import org.eclipse.jst.jsp.ui.internal.preferences.JSPUIPreferenceNames;
+import org.eclipse.ui.editors.text.EditorsUI;
+import org.eclipse.ui.texteditor.AbstractDecoratedTextEditorPreferenceConstants;
 import org.eclipse.wst.sse.core.StructuredModelManager;
 import org.eclipse.wst.sse.core.internal.provisional.IStructuredModel;
 import org.eclipse.wst.sse.core.internal.provisional.text.IStructuredDocumentRegion;
@@ -54,6 +56,25 @@ public class StructuredAutoEditStrategyJSPJava extends StructuredAutoEditStrateg
 					}
 				}
 			}
+			else{
+				//if inserted string represents hitting the Tab key, it is going to be marked to not be customized for JavaAutoIndentStrategy
+				//bug338254
+				if (command.text.trim().length() == 0){
+					if (isSpacesForTabsEnabled()){ 
+						if (command.text.length() <= getEditorTabSize()){
+							boolean isTabConverted= true;
+							for(int i =0 ; i< command.text.length() && isTabConverted; i++){
+								if (command.text.charAt(i) != ' '){
+									isTabConverted=false;
+								}
+							}
+							if (isTabConverted){
+								command.doit=false;
+							}
+						}
+					}
+				}
+			}
 		}
 		finally {
 			if (model != null)
@@ -63,6 +84,14 @@ public class StructuredAutoEditStrategyJSPJava extends StructuredAutoEditStrateg
 	
 	private boolean isPreferenceEnabled(String key) {
 		return (key != null && JSPUIPlugin.getDefault().getPreferenceStore().getBoolean(key));
+	}
+	
+	private boolean isSpacesForTabsEnabled(){
+		return EditorsUI.getPreferenceStore().getBoolean(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_SPACES_FOR_TABS);
+	}
+	
+	private int getEditorTabSize(){
+		return EditorsUI.getPreferenceStore().getInt(AbstractDecoratedTextEditorPreferenceConstants.EDITOR_TAB_WIDTH);
 	}
 
 	private boolean prefixedWith(IDocument document, int offset, String string) {
