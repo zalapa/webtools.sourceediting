@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2011 IBM Corporation and others.
+ * Copyright (c) 2004, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -403,13 +403,61 @@ public class TaglibHelper {
 				String varClass = "java.lang.String"; // the default
 				// class...//$NON-NLS-1$
 				if (var.getVariableClass() != null) {
-					varClass = var.getVariableClass();
+					varClass = getCustomVariableClass(var);
 				}
 				results.add(new TaglibVariable(varClass, varName, var.getScope(), var.getDescription()));
 			}
 		}
 	}
 
+	
+	/**
+	 * Adds the unbounded wildcard (<?> or <?,?>) parameterized type, to avoid the compiler complains.
+	 * https://bugs.eclipse.org/bugs/show_bug.cgi?id=409562 
+	 * @param variable
+	 * @return
+	 */
+	private String getCustomVariableClass(TLDVariable variable){
+		String variableClass = variable.getVariableClass();
+		if (fJavaProject != null){
+			String compliance = fJavaProject.getOption(JavaCore.COMPILER_SOURCE, true);			
+			try{
+				boolean allowGenerics = Float.parseFloat(compliance) > 1.4;
+				if (allowGenerics && variableClass.indexOf('<') == -1){
+					ClassLoader loader=ClassLoader.getSystemClassLoader();
+					Class className=loader.loadClass(variableClass);
+					Class [] interfaces = className.getInterfaces();
+					String params = getParametersForGenerics(interfaces);
+					if (params != null){
+						variableClass+=params;
+					}
+				}
+
+			}
+			catch(NumberFormatException e){} 
+			catch (ClassNotFoundException e) {}
+		}
+		return variableClass;
+	}
+
+	private String getParametersForGenerics(Class []interfaces){
+		String param = null;
+		if (interfaces != null && interfaces.length > 0){
+			for(int i=0; i<interfaces.length && param == null; i++){
+				String interfaceName = interfaces[i].getName();
+				if (interfaceName.equals("java.util.Map")){
+					param = "<?,?>";
+				}
+				else if (interfaceName.equals("java.util.Collection")){
+					param = "<?>";
+				}
+				else
+					param = getParametersForGenerics(interfaces[i].getInterfaces());
+			}
+		}
+		return param;
+	}
+	
 	/**
 	 * Adds 1.1 style TaglibVariables (defined in a TagExtraInfo class) to the
 	 * results list. Also reports problems with the tag and tei classes in
