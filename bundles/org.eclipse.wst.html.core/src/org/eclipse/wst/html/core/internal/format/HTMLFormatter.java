@@ -801,6 +801,16 @@ public class HTMLFormatter implements IStructuredFormatter {
         		if (theParentElement.getFirstChild().getNodeType() == Node.ELEMENT_NODE) {
         			result = false;
         		}
+        		else{
+        			if (theParentElement.getFirstChild().getNodeType() == Node.TEXT_NODE){
+        				IStructuredDocument structuredDocument = ((IDOMNode) theNode).getStructuredDocument();
+						int offsetFirstChild = ((IDOMNode) theParentElement.getFirstChild()).getStartOffset();
+						int offsetLastChild = ((IDOMNode) theNode).getStartOffset();
+						if (structuredDocument.getLineOfOffset(offsetFirstChild) == structuredDocument.getLineOfOffset(offsetLastChild)){
+							result=false;
+						}
+        			}
+        		}
         	}
         	else {
         		result = false;
